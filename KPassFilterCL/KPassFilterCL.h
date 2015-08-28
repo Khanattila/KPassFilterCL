@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cfloat>
 #include <cmath>
 #include <cstring>
 #include <fstream>
