@@ -1,6 +1,6 @@
 ## KPassFilterCL ## 
 #### What ####
-*KPassFilterCL* is a set of tools in the frequency domain.
+**KPassFilterCL** is a set of tools in the frequency domain.
 
 #### Why ####
 Paranoid encoders.
@@ -22,6 +22,6 @@ Paranoid encoders.
 	KMergeHigh(clip, clip, float cutoff, string mode, string device_type,
         	bool lsb_inout, bool info)
 	
-	KMergeBand(clip, clip, float lcutoff, float hcuttoff, string mode, string device_type,
-	        bool lsb_inout, bool info)      
+	KMergeBand(clip, clip, float lcutoff, float hcuttoff, string mode,
+	        string device_type, bool lsb_inout, bool info)      
 ```
