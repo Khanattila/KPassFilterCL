@@ -7,19 +7,21 @@ Paranoid encoders.
 
 #### How ####
 ```
-KLowPass(clip,  float cutoff, string mode, string device_type, bool lsb_inout, bool info)
+KLowPass(clip,  float cutoff, string mode, 
+	string device_type, bool lsb_inout, bool info)
 
-KHighPass(clip, float cutoff, string mode, string device_type, bool lsb_inout, bool info)
+KHighPass(clip, float cutoff, string mode, 
+	string device_type, bool lsb_inout, bool info)
 
-KBandPass(clip, float lcutoff, float hcuttoff, string mode, string device_type, 
-	bool lsb_inout, bool info)
+KBandPass(clip, float lcutoff, float hcuttoff, string mode, 
+	string device_type, bool lsb_inout, bool info)
 	
-KMergeLow(clip, clip, float cutoff, string mode, string device_type,
-        bool lsb_inout, bool info)
+KMergeLow(clip, clip, float cutoff, string mode, 
+	string device_type, bool lsb_inout, bool info)
 	
-KMergeHigh(clip, clip, float cutoff, string mode, string device_type,
-        bool lsb_inout, bool info)
+KMergeHigh(clip, clip, float cutoff, string mode, 
+	string device_type, bool lsb_inout, bool info)
 	
 KMergeBand(clip, clip, float lcutoff, float hcuttoff, string mode,
-        string device_type, bool lsb_inout, bool info)      
+	string device_type, bool lsb_inout, bool info)      
 ```
