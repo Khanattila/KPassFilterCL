@@ -16,8 +16,8 @@
 *	along with KPassFilterCL. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define DFT_lcutoff 60.0
-#define DFT_hcutoff -60.0
+#define DFT_lcutoff FLT_MIN
+#define DFT_hcutoff FLT_MAX
 #define DFT_mode "MAGNITUDE"
 #define DFT_ocl_device "DEFAULT"
 #define DFT_lsb false
@@ -115,22 +115,17 @@ KPassFilterClass::KPassFilterClass(PClip _child, PClip _baby, const double _lcut
 		env->ThrowError("KPassFilterCL: clip2 do not math clip1!");
 	if (!vi.IsPlanar() || !vi.IsYUV()) 
 		env->ThrowError("KPassFilterCL: planar YUV data only!");
-	if (lcutoff < -60.0 || hcutoff < -60.0 || lcutoff > 60.0 || hcutoff > 60.0) {
+	if (lcutoff < FLT_MIN || hcutoff < FLT_MIN || lcutoff > FLT_MAX || hcutoff > FLT_MAX) {
 		if (filter == BAND_PASS || filter == MERGE_BAND)
-			env->ThrowError("KPassFilterCL: lcutoff/hcutoff must be in range [-60, 60]!");
+			env->ThrowError("KPassFilterCL: lcutoff/hcutoff must be in range [FLT_MIN, FLT_MAX]!");
 		else
-			env->ThrowError("KPassFilterCL: cutoff must be in range [-60, 60]!");
+			env->ThrowError("KPassFilterCL: cutoff must be in range [FLT_MIN, FLT_MAX]!");
 	}
     mode_t mode_i = MAGNITUDE;
-	double lcutoff_n = 0.0, hcutoff_n = 0.0;
 	if (!strcasecmp(mode, "MAGNITUDE")) {
 		mode_i = MAGNITUDE;
-		lcutoff_n = pow(2.0, lcutoff);
-		hcutoff_n = pow(2.0, hcutoff);
 	} else if (!strcasecmp(mode, "PHASE")) {
 		mode_i = PHASE;
-		lcutoff_n = lcutoff;
-		hcutoff_n = hcutoff;
 	} else {
 		env->ThrowError("KPassFilterCL: mode must be magnitude or phase!");
 	}
@@ -157,7 +152,7 @@ KPassFilterClass::KPassFilterClass(PClip _child, PClip _baby, const double _lcut
     cl_platform_id *temp_platforms = (cl_platform_id*) malloc(sizeof(cl_platform_id) * num_platforms);
     ret |= clGetPlatformIDs(num_platforms, temp_platforms, NULL);
     if (ret != CL_SUCCESS) {
-        env->ThrowError("KPassFilterCL: AviSynthCreate error(clGetPlatformIDs)!");
+        env->ThrowError("KPassFilterCL: AviSynthCreate error (clGetPlatformIDs)!");
     }
     for (cl_uint i = 0; i < num_platforms; i++) {
         ret |= clGetDeviceIDs(temp_platforms[i], device, 0, 0, &num_devices);
@@ -175,7 +170,7 @@ KPassFilterClass::KPassFilterClass(PClip _child, PClip _baby, const double _lcut
     }
     free(temp_platforms);
     if (ret != CL_SUCCESS && ret != CL_DEVICE_NOT_FOUND) {
-        env->ThrowError("KPassFilter: AviSynthCreate error(clGetDeviceIDs)!");
+        env->ThrowError("KPassFilter: AviSynthCreate error (clGetDeviceIDs)!");
     } else if (device_aviable == CL_FALSE) {
         env->ThrowError("KPassFilter: opencl device not available!");
     }
@@ -200,7 +195,7 @@ KPassFilterClass::KPassFilterClass(PClip _child, PClip _baby, const double _lcut
 	char options[4048];
 	snprintf(options, 4048, "-cl-denorms-are-zero -cl-single-precision-constant -cl-fast-relaxed-math -Werror \
         -D PFK_N=%lf -D PFK_MODE=%i -D PFK_FILTER=%i -D PFK_LCUTOFF=%lf -D PFK_HCUTOFF=%lf",
-        (double) (idmn[0] * idmn[1]), mode_i, filter, lcutoff_n, hcutoff_n);
+        (double) (idmn[0] * idmn[1]), mode_i, filter, lcutoff, hcutoff);
 	ret = clBuildProgram(program, 1, &deviceID, options, NULL, NULL);
 	if (ret != CL_SUCCESS) {
 		size_t log_size;
@@ -211,7 +206,7 @@ KPassFilterClass::KPassFilterClass(PClip _child, PClip _baby, const double _lcut
 		outfile.write(log, log_size);
 		outfile.close();
 		free(log);
-		env->ThrowError("KPassFilterCL: AviSynthCreate error (1)!");
+		env->ThrowError("KPassFilterCL: AviSynthCreate error (clBuildProgram)!");
 	}
 
 	// Creates and sets kernel arguments.
@@ -219,7 +214,7 @@ KPassFilterClass::KPassFilterClass(PClip _child, PClip _baby, const double _lcut
 	ret |= clSetKernelArg(kernel, 0, sizeof(cl_mem), &mem_in[0]);
 	ret |= clSetKernelArg(kernel, 1, sizeof(cl_mem), (filter >= 3) ? &mem_in[1] : &mem_in[0]);
 	ret |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &mem_out);
-	if (ret != CL_SUCCESS) 	env->ThrowError("KPassFilterCL: AviSynthCreate error (2)!");
+	if (ret != CL_SUCCESS) 	env->ThrowError("KPassFilterCL: AviSynthCreate error (clSetKernelArg)!");
 }
 #endif //__AVISYNTH_6_H__
 
@@ -258,6 +253,7 @@ PVideoFrame __stdcall KPassFilterClass::GetFrame(int n, IScriptEnvironment* env)
 	ret |= clEnqueueReadImage(command_queue, mem_out, CL_TRUE, origin, region, 0, 0, out, 0, NULL, NULL);
 	fftwf_execute(q);
     ret |= readBuffer(dst);
+    if (ret != CL_SUCCESS) env->ThrowError("KPassFilterCL: AviSynthGetFrame error!");
 
 	// Info.
 	if (info) {
@@ -318,32 +314,32 @@ KPassFilterClass::~KPassFilterClass() {
 #ifdef __AVISYNTH_6_H__
 AVSValue __cdecl AviSynthPluginCreateKLowPass(AVSValue args, void* user_data, IScriptEnvironment* env) {
 	return new KPassFilterClass(args[0].AsClip(), args[0].AsClip(), 
-		args[1].AsFloat(DFT_lcutoff), args[1].AsFloat(DFT_lcutoff), args[2].AsString(DFT_mode),
+		args[1].AsFloat(DFT_hcutoff), args[1].AsFloat(DFT_hcutoff), args[2].AsString(DFT_mode),
 		args[3].AsString(DFT_ocl_device), args[4].AsBool(DFT_lsb), args[5].AsBool(DFT_info), LOW_PASS, env);
 }
 AVSValue __cdecl AviSynthPluginCreateKHighPass(AVSValue args, void* user_data, IScriptEnvironment* env) {
 	return new KPassFilterClass(args[0].AsClip(), args[0].AsClip(), 
-		args[1].AsFloat(DFT_hcutoff), args[1].AsFloat(DFT_hcutoff), args[2].AsString(DFT_mode),
+		args[1].AsFloat(DFT_lcutoff), args[1].AsFloat(DFT_lcutoff), args[2].AsString(DFT_mode),
 		args[3].AsString(DFT_ocl_device), args[4].AsBool(DFT_lsb), args[5].AsBool(DFT_info), HIGH_PASS, env);
 }
 AVSValue __cdecl AviSynthPluginCreateKBandPass(AVSValue args, void* user_data, IScriptEnvironment* env) {
 	return new KPassFilterClass(args[0].AsClip(), args[0].AsClip(), 
-		args[1].AsFloat(DFT_hcutoff), args[2].AsFloat(DFT_lcutoff), args[3].AsString(DFT_mode),
+        args[1].AsFloat(DFT_lcutoff), args[2].AsFloat(DFT_hcutoff), args[3].AsString(DFT_mode),
 		args[4].AsString(DFT_ocl_device), args[5].AsBool(DFT_lsb), args[6].AsBool(DFT_info), BAND_PASS, env);
 }
 AVSValue __cdecl AviSynthPluginCreateKMergeLow(AVSValue args, void* user_data, IScriptEnvironment* env) {
 	return new KPassFilterClass(args[0].AsClip(), args[1].AsClip(), 
-		args[2].AsFloat(DFT_lcutoff), args[2].AsFloat(DFT_lcutoff), args[3].AsString(DFT_mode),
+		args[2].AsFloat(DFT_hcutoff), args[2].AsFloat(DFT_hcutoff), args[3].AsString(DFT_mode),
 		args[4].AsString(DFT_ocl_device), args[5].AsBool(DFT_lsb), args[6].AsBool(DFT_info), MERGE_LOW, env);
 }
 AVSValue __cdecl AviSynthPluginCreateKMergeHigh(AVSValue args, void* user_data, IScriptEnvironment* env) {
 	return new KPassFilterClass(args[0].AsClip(), args[1].AsClip(), 
-		args[2].AsFloat(DFT_hcutoff), args[2].AsFloat(DFT_hcutoff), args[3].AsString(DFT_mode),
+		args[2].AsFloat(DFT_lcutoff), args[2].AsFloat(DFT_lcutoff), args[3].AsString(DFT_mode),
 		args[4].AsString(DFT_ocl_device), args[5].AsBool(DFT_lsb), args[6].AsBool(DFT_info), MERGE_HIGH, env);
 }
 AVSValue __cdecl AviSynthPluginCreateKMergeBand(AVSValue args, void* user_data, IScriptEnvironment* env) {
 	return new KPassFilterClass(args[0].AsClip(), args[1].AsClip(), 
-		args[2].AsFloat(DFT_hcutoff), args[3].AsFloat(DFT_lcutoff), args[4].AsString(DFT_mode),
+		args[2].AsFloat(DFT_lcutoff), args[3].AsFloat(DFT_hcutoff), args[4].AsString(DFT_mode),
 		args[5].AsString(DFT_ocl_device), args[6].AsBool(DFT_lsb), args[7].AsBool(DFT_info), MERGE_BAND, env);
 }
 #endif //__AVISYNTH_6_H__
