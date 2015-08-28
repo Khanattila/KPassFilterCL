@@ -32,10 +32,10 @@ static const char* source_code =
 "	float4 u0 = read_imagef(U0, smp, (int2) (x, y));														      \n" \
 "	float4 u1 = (PFK_FILTER >= 3) ? read_imagef(U1, smp, (int2) (x, y)) : 0.0f; 							      \n" \
 "																												  \n" \
-"	mgn_u0 = native_sqrt(u0.x * u0.x + u0.w * u0.w);											               	  \n" \
-"	phs_u0 = atan2(u0.w, u0.x);																		              \n" \
-"	mgn_u1 = (PFK_FILTER >= 3) ? native_sqrt(u1.x * u1.x + u1.w * u1.w) : 0.0f;						              \n" \
-"	phs_u1 = (PFK_FILTER >= 3) ? atan2(u1.w, u1.x) : 0.0f;											              \n" \
+"	float mgn_u0 = native_sqrt(u0.x * u0.x + u0.w * u0.w);											              \n" \
+"	float phs_u0 = atan2(u0.w, u0.x);																		      \n" \
+"	float mgn_u1 = (PFK_FILTER >= 3) ? native_sqrt(u1.x * u1.x + u1.w * u1.w) : 0.0f;						      \n" \
+"	float phs_u1 = (PFK_FILTER >= 3) ? atan2(u1.w, u1.x) : 0.0f;											      \n" \
 "																												  \n" \
 "	float mgn = 0.0f, phs = 0.0f;																				  \n" \
 "	if (PFK_MODE == 0) {																						  \n" \
