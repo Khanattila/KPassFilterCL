@@ -177,7 +177,7 @@ KPassFilterClass::KPassFilterClass(PClip _child, PClip _baby, const double _lcut
 
 	// Creates an OpenCL context and 2D images.
 	context = clCreateContext(NULL, 1, &deviceID, NULL, NULL, NULL);
-	const cl_image_format image_format = { CL_RA, CL_FLOAT };
+	const cl_image_format image_format = { CL_RG, CL_FLOAT };
 	idmn[0] = vi.width;
 	idmn[1] = lsb ? (vi.height / 2) : (vi.height);
 	mem_in[0] = clCreateImage2D(context, CL_MEM_READ_ONLY, &image_format, idmn[0], idmn[1], 0, NULL, NULL);
@@ -193,7 +193,7 @@ KPassFilterClass::KPassFilterClass(PClip _child, PClip _baby, const double _lcut
 	// Creates and Build a program executable from the program source.
 	program = clCreateProgramWithSource(context, 1, &source_code, NULL, NULL);
 	char options[4048];
-	snprintf(options, 4048, "-cl-denorms-are-zero -cl-single-precision-constant -cl-fast-relaxed-math -Werror \
+	snprintf(options, 4048, "-cl-single-precision-constant -cl-denorms-are-zero  -cl-fast-relaxed-math -Werror \
         -D PFK_N=%lf -D PFK_MODE=%i -D PFK_FILTER=%i -D PFK_LCUTOFF=%lf -D PFK_HCUTOFF=%lf",
         (double) (idmn[0] * idmn[1]), mode_i, filter, lcutoff, hcutoff);
 	ret = clBuildProgram(program, 1, &deviceID, options, NULL, NULL);
@@ -211,10 +211,10 @@ KPassFilterClass::KPassFilterClass(PClip _child, PClip _baby, const double _lcut
 
 	// Creates and sets kernel arguments.
 	kernel = clCreateKernel(program, "KPassFilter", NULL);
-	ret |= clSetKernelArg(kernel, 0, sizeof(cl_mem), &mem_in[0]);
+	ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &mem_in[0]);
 	ret |= clSetKernelArg(kernel, 1, sizeof(cl_mem), (filter >= 3) ? &mem_in[1] : &mem_in[0]);
 	ret |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &mem_out);
-	if (ret != CL_SUCCESS) 	env->ThrowError("KPassFilterCL: AviSynthCreate error (clSetKernelArg)!");
+    if (ret != CL_SUCCESS) env->ThrowError("KPassFilterCL: AviSynthCreate error (clSetKernelArg)!");
 }
 #endif //__AVISYNTH_6_H__
 

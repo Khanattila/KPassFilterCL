@@ -32,10 +32,10 @@ static const char* source_code =
 "	float4 u0 = read_imagef(U0, smp, (int2) (x, y));														      \n" \
 "	float4 u1 = (PFK_FILTER >= 3) ? read_imagef(U1, smp, (int2) (x, y)) : 0.0f; 							      \n" \
 "																												  \n" \
-"	float mgn_u0 = native_sqrt(u0.x * u0.x + u0.w * u0.w);											              \n" \
-"	float phs_u0 = atan2(u0.w, u0.x);																		      \n" \
-"	float mgn_u1 = (PFK_FILTER >= 3) ? native_sqrt(u1.x * u1.x + u1.w * u1.w) : 0.0f;						      \n" \
-"	float phs_u1 = (PFK_FILTER >= 3) ? atan2(u1.w, u1.x) : 0.0f;											      \n" \
+"	float mgn_u0 = native_sqrt(u0.x * u0.x + u0.y * u0.y);											              \n" \
+"	float phs_u0 = atan2(u0.y, u0.x);																		      \n" \
+"	float mgn_u1 = (PFK_FILTER >= 3) ? native_sqrt(u1.x * u1.x + u1.y * u1.y) : 0.0f;						      \n" \
+"	float phs_u1 = (PFK_FILTER >= 3) ? atan2(u1.y, u1.x) : 0.0f;											      \n" \
 "																												  \n" \
 "	float mgn = 0.0f, phs = 0.0f;																				  \n" \
 "	if (PFK_MODE == 0) {																						  \n" \
@@ -69,7 +69,7 @@ static const char* source_code =
 "																												  \n" \
 "	const float rel = mgn * native_cos(phs);																	  \n" \
 "	const float img = mgn * native_sin(phs);																	  \n" \
-"	const float4 val = native_divide((float4) (rel, 0.0f, 0.0f, img), (float4) PFK_N);							  \n" \
+"	const float4 val = native_divide((float4) (rel, img, 0.0f, 1.0f), (float4) PFK_N);							  \n" \
 "	write_imagef(U2, (int2) (x, y), val);																		  \n" \
 "}																												     ";
 
