@@ -69,7 +69,7 @@ private:
     cl_uint readBuffer(PVideoFrame &frm);
     cl_uint writeBuffer(PVideoFrame &frm);
 public:
-	KPassFilterClass(PClip _child, PClip _baby, const double _lcutoff, const double _hcutoff, const char *_mode, 
+	KPassFilterClass(PClip _child, PClip _baby, const double _lcutoff, const double _hcutoff, const char *_mode,
 		const char *_ocl_device, const bool _lsb, const bool _info, filter_t filter, IScriptEnvironment* env);
 	~KPassFilterClass();
 	PVideoFrame __stdcall GetFrame(int n, IScriptEnvironment* env);
